@@ -123,22 +123,8 @@ def build_canvas(weather_data, image_data):
     return f"""
     <div class="stage">
       <canvas id="sky"></canvas>
-      <!-- 水墨晕染层 -->
-      <canvas id="ink-layer"></canvas>
-      <!-- 印章装饰 -->
-      <div class="seal seal-left">气象</div>
-      <div class="seal seal-right">天象</div>
-      <!-- 古典边框 -->
-      <div class="corner corner-tl"></div>
-      <div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div>
-      <div class="corner corner-br"></div>
-      <!-- 墨渍装饰 -->
-      <div class="ink-spot ink-spot-1"></div>
-      <div class="ink-spot ink-spot-2"></div>
-      <div class="ink-spot ink-spot-3"></div>
       <div class="overlay">
-        <div class="label">实时气象 · 节气物候</div>
+        <div class="label">REAL-TIME WEATHER TRANSLATION</div>
         <h1>{weather_data["city"]}</h1>
         <h2>{image_data["name"]}</h2>
         <p>{image_data["poem"]}</p>
@@ -152,16 +138,13 @@ def build_canvas(weather_data, image_data):
     </div>
 
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600&display=swap');
-
       .stage {{
         position: relative;
         width: 100%;
         height: 680px;
         overflow: hidden;
         border-radius: 8px;
-        background: #0d0f12;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: #080b10;
       }}
 
       #sky {{
@@ -171,184 +154,55 @@ def build_canvas(weather_data, image_data):
         height: 100%;
       }}
 
-      #ink-layer {{
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0.35;
-        mix-blend-mode: screen;
-      }}
-
-      /* 印章风格 - 朱砂红色 */
-      .seal {{
-        position: absolute;
-        width: 56px;
-        height: 56px;
-        border: 2px solid rgba(180, 60, 50, 0.7);
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Ma Shan Zheng', cursive;
-        font-size: 18px;
-        color: rgba(180, 60, 50, 0.75);
-        opacity: 0.55;
-        background: radial-gradient(circle, rgba(180, 60, 50, 0.08) 0%, transparent 70%);
-        z-index: 5;
-      }}
-
-      .seal-left {{
-        left: 24px;
-        top: 24px;
-        transform: rotate(-5deg);
-      }}
-
-      .seal-right {{
-        right: 24px;
-        top: 24px;
-        transform: rotate(8deg);
-      }}
-
-      /* 古典边角装饰 - 水墨线条 */
-      .corner {{
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        z-index: 4;
-      }}
-
-      .corner-tl {{
-        top: 12px;
-        left: 12px;
-        border-left: 1px solid rgba(150, 150, 150, 0.25);
-        border-top: 1px solid rgba(150, 150, 150, 0.25);
-      }}
-
-      .corner-tr {{
-        top: 12px;
-        right: 12px;
-        border-right: 1px solid rgba(150, 150, 150, 0.25);
-        border-top: 1px solid rgba(150, 150, 150, 0.25);
-      }}
-
-      .corner-bl {{
-        bottom: 12px;
-        left: 12px;
-        border-left: 1px solid rgba(150, 150, 150, 0.25);
-        border-bottom: 1px solid rgba(150, 150, 150, 0.25);
-      }}
-
-      .corner-br {{
-        bottom: 12px;
-        right: 12px;
-        border-right: 1px solid rgba(150, 150, 150, 0.25);
-        border-bottom: 1px solid rgba(150, 150, 150, 0.25);
-      }}
-
-      /* 墨渍晕染效果 */
-      .ink-spot {{
-        position: absolute;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(100, 100, 110, 0.12) 0%, transparent 60%);
-        filter: blur(20px);
-        z-index: 3;
-        animation: ink-flow 15s ease-in-out infinite alternate;
-      }}
-
-      .ink-spot-1 {{
-        width: 280px;
-        height: 280px;
-        top: 15%;
-        left: 60%;
-        animation-delay: 0s;
-      }}
-
-      .ink-spot-2 {{
-        width: 200px;
-        height: 200px;
-        top: 55%;
-        left: 25%;
-        animation-delay: 3s;
-      }}
-
-      .ink-spot-3 {{
-        width: 320px;
-        height: 320px;
-        top: 40%;
-        left: 70%;
-        animation-delay: 6s;
-      }}
-
-      @keyframes ink-flow {{
-        0% {{ transform: scale(1) rotate(0deg); opacity: 0.15; }}
-        50% {{ transform: scale(1.15) rotate(3deg); opacity: 0.22; }}
-        100% {{ transform: scale(1) rotate(-2deg); opacity: 0.18; }}
-      }}
-
       .overlay {{
         position: absolute;
-        left: 48px;
-        bottom: 42px;
+        left: 42px;
+        bottom: 38px;
         max-width: 720px;
         color: white;
-        font-family: 'Noto Serif SC', serif;
-        z-index: 10;
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
       }}
 
       .label {{
-        margin-bottom: 16px;
-        color: rgba(200,200,200,.5);
-        font-size: 11px;
-        letter-spacing: .2em;
-        font-weight: 400;
+        margin-bottom: 14px;
+        color: rgba(255,255,255,.58);
+        font-size: 12px;
+        letter-spacing: .16em;
+        font-weight: 700;
       }}
 
       .overlay h1 {{
         margin: 0;
-        font-size: 96px;
-        line-height: .85;
-        font-weight: 400;
-        font-family: 'Ma Shan Zheng', cursive;
-        letter-spacing: 8px;
-        text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 60px rgba(100, 100, 120, 0.2);
+        font-size: 86px;
+        line-height: .9;
+        font-weight: 900;
       }}
 
       .overlay h2 {{
-        margin: 20px 0 12px;
-        font-size: 36px;
-        font-weight: 400;
-        font-family: 'Ma Shan Zheng', cursive;
-        letter-spacing: 3px;
+        margin: 16px 0 10px;
+        font-size: 34px;
+        font-weight: 700;
       }}
 
       .overlay p {{
-        margin: 0 0 28px;
-        color: rgba(220,220,220,.75);
-        font-size: 18px;
-        line-height: 1.6;
-        font-family: 'Noto Serif SC', serif;
-        letter-spacing: 1px;
-        border-left: 2px solid rgba(150, 150, 150, 0.2);
-        padding-left: 14px;
+        margin: 0 0 24px;
+        color: rgba(255,255,255,.72);
+        font-size: 20px;
       }}
 
       .metrics {{
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
       }}
 
       .metrics span {{
-        padding: 10px 16px;
-        border: 1px solid rgba(150,150,150,.15);
-        border-radius: 4px;
-        background: rgba(255,255,255,.04);
-        color: rgba(255,255,255,.85);
-        font-size: 14px;
-        font-family: 'Noto Serif SC', serif;
-        letter-spacing: 0.5px;
-        backdrop-filter: blur(8px);
+        padding: 8px 12px;
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 999px;
+        background: rgba(255,255,255,.08);
+        color: rgba(255,255,255,.82);
+        font-size: 13px;
       }}
     </style>
 
@@ -356,13 +210,10 @@ def build_canvas(weather_data, image_data):
       const data = {json.dumps(payload, ensure_ascii=False)};
       const canvas = document.getElementById("sky");
       const ctx = canvas.getContext("2d");
-      const inkCanvas = document.getElementById("ink-layer");
-      const inkCtx = inkCanvas.getContext("2d");
 
       let width = 0;
       let height = 0;
       let particles = [];
-      let inkBlots = [];
 
       function resize() {{
         const rect = canvas.getBoundingClientRect();
@@ -370,50 +221,6 @@ def build_canvas(weather_data, image_data):
         height = rect.height * window.devicePixelRatio;
         canvas.width = width;
         canvas.height = height;
-        inkCanvas.width = width;
-        inkCanvas.height = height;
-      }}
-
-      // 水墨晕染层
-      function createInkBlot() {{
-        return {{
-          x: rand(0, width),
-          y: rand(0, height),
-          r: rand(80, 180) * window.devicePixelRatio,
-          alpha: rand(0.05, 0.15),
-          drift: rand(-0.3, 0.3)
-        }};
-      }}
-
-      function initInk() {{
-        inkBlots = Array.from({{ length: 5 }}, createInkBlot);
-      }}
-
-      function drawInkLayer() {{
-        inkCtx.clearRect(0, 0, width, height);
-        for (const blot of inkBlots) {{
-          blot.x += blot.drift;
-          blot.alpha += rand(-0.005, 0.005);
-          blot.alpha = Math.max(0.03, Math.min(0.18, blot.alpha));
-
-          const gradient = inkCtx.createRadialGradient(
-            blot.x, blot.y, 0,
-            blot.x, blot.y, blot.r
-          );
-          gradient.addColorStop(0, `rgba(120, 125, 130, ${blot.alpha})`);
-          gradient.addColorStop(0.5, `rgba(100, 105, 110, ${blot.alpha * 0.5})`);
-          gradient.addColorStop(1, 'transparent');
-
-          inkCtx.fillStyle = gradient;
-          inkCtx.beginPath();
-          inkCtx.arc(blot.x, blot.y, blot.r, 0, Math.PI * 2);
-          inkCtx.fill();
-
-          // 边界检测
-          if (blot.x < -blot.r || blot.x > width + blot.r) {{
-            blot.x = rand(0, width);
-          }}
-        }}
       }}
 
       function rand(min, max) {{
@@ -467,7 +274,6 @@ def build_canvas(weather_data, image_data):
 
       function init() {{
         resize();
-        initInk();
         const count = Math.floor(220 + data.humidity * 3 + data.wind * 8);
         particles = Array.from({{ length: count }}, createParticle);
       }}

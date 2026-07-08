@@ -10,5 +10,8 @@ venv/
 .vscode/
 .idea/
 
-# Streamlit 本地缓存
+# Streamlit
 .streamlit/
+
+# macOS
+.DS_Store
