@@ -1,4 +1,4 @@
-"""term_mapping.py - 节气意象映射模块
+"""core/term_mapping.py - 节气意象映射
 根据天气关键词映射到节气视觉风格（包含配色、粒子模式、文案）
 """
 
@@ -11,7 +11,7 @@ def season_image(weather):
       solar_term: 节气名
       mode:       粒子模式（clear / rain / snow / mist / thunder）
       poem:       诗句
-      colors:     5 色配色数组（深→浅），供 Canvas 使用
+      colors:     4 色配色数组（深→浅），供 Canvas 使用
     """
     # 优先判断「雷」：雷雨同时包含「雷」和「雨」，必须放前面
     if "雷" in weather:

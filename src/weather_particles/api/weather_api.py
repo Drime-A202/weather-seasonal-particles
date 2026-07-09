@@ -1,6 +1,6 @@
-"""weather_api.py - 天气数据获取模块（实时 + 历史）
+"""api/weather_api.py - 天气数据获取（实时 + 历史）
 依赖：
-  - config.py 中的 CITY_COORDS / WEATHER_MAP / RAIN_INTENSITY_MAP
+  - core.config 中的 CITY_COORDS / WEATHER_MAP / RAIN_INTENSITY_MAP
   - requests 库
   - streamlit（用于失败提示 st.warning）
 """
@@ -9,7 +9,11 @@ import requests
 import streamlit as st
 from datetime import datetime
 
-from config import CITY_COORDS, WEATHER_MAP, RAIN_INTENSITY_MAP
+from weather_particles.core.config import (
+    CITY_COORDS,
+    WEATHER_MAP,
+    RAIN_INTENSITY_MAP,
+)
 
 
 def fetch_weather(city):

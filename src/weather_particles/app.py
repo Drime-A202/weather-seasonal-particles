@@ -1,21 +1,35 @@
-"""app.py - Streamlit 主入口
+"""app.py - Streamlit 主入口（位于 src/weather_particles/ 下）
 职责：UI 布局（页头、侧边栏、主内容） + 业务逻辑编排
 
-依赖模块：
-  - config.py       ：CITY_COORDS
-  - weather_api.py  ：fetch_weather / fetch_historical_weather
-  - term_mapping.py ：season_image
-  - canvas_builder.py：build_canvas
+启动方式（在项目根目录执行）：
+  streamlit run src/weather_particles/app.py
+
+注意：本文件在脚本模式下（streamlit run）运行时没有包上下文，
+因此需要在开头显式把 `src/` 加入 sys.path。
 """
 
+import sys
 import time
+from pathlib import Path
+
+# -------- 把 src 目录加入 sys.path（解决脚本直接运行的导入问题） --------
+# __file__:   .../weather-seasonal-particles/src/weather_particles/app.py
+# .parent:    .../weather-seasonal-particles/src/weather_particles
+# .parent.parent: .../weather-seasonal-particles/src  ← 目标目录
+_SRC_DIR = Path(__file__).resolve().parent.parent
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
 import streamlit as st
 from datetime import datetime, timedelta
 
-from config import CITY_COORDS
-from weather_api import fetch_weather, fetch_historical_weather
-from term_mapping import season_image
-from canvas_builder import build_canvas
+from weather_particles.core.config import CITY_COORDS
+from weather_particles.api.weather_api import (
+    fetch_weather,
+    fetch_historical_weather,
+)
+from weather_particles.core.term_mapping import season_image
+from weather_particles.renderer.canvas_builder import build_canvas
 
 
 # ==================== 页面基础配置 ====================
