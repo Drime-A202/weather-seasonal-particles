@@ -15,29 +15,24 @@ st.set_page_config(
 
 # ==================== 城市列表 ====================
 CITY_COORDS = {
-    # 直辖市
     "北京": {"lat": 39.9042, "lon": 116.4074},
     "上海": {"lat": 31.2304, "lon": 121.4737},
     "天津": {"lat": 39.3434, "lon": 117.3616},
     "重庆": {"lat": 29.4316, "lon": 106.9123},
-    # 东北地区
     "哈尔滨": {"lat": 45.8038, "lon": 126.5349},
     "长春": {"lat": 43.8171, "lon": 125.3235},
     "沈阳": {"lat": 41.8057, "lon": 123.4315},
     "大连": {"lat": 38.9140, "lon": 121.6147},
-    # 华北地区
     "呼和浩特": {"lat": 40.8426, "lon": 111.7490},
     "太原": {"lat": 37.8706, "lon": 112.5489},
     "石家庄": {"lat": 38.0428, "lon": 114.5149},
     "济南": {"lat": 36.6512, "lon": 117.1201},
     "青岛": {"lat": 36.0671, "lon": 120.3826},
-    # 西北地区
     "乌鲁木齐": {"lat": 43.8256, "lon": 87.6168},
     "拉萨": {"lat": 29.6520, "lon": 91.1721},
     "西宁": {"lat": 36.6171, "lon": 101.7778},
     "兰州": {"lat": 36.0611, "lon": 103.8343},
     "银川": {"lat": 38.4872, "lon": 106.2309},
-    # 华东地区
     "南京": {"lat": 32.0603, "lon": 118.7969},
     "杭州": {"lat": 30.2741, "lon": 120.1551},
     "合肥": {"lat": 31.8206, "lon": 117.2272},
@@ -47,11 +42,9 @@ CITY_COORDS = {
     "厦门": {"lat": 24.4798, "lon": 118.0894},
     "宁波": {"lat": 29.8683, "lon": 121.5440},
     "温州": {"lat": 27.9938, "lon": 120.6994},
-    # 华中地区
     "郑州": {"lat": 34.7466, "lon": 113.6254},
     "武汉": {"lat": 30.5928, "lon": 114.3055},
     "长沙": {"lat": 28.2282, "lon": 112.9388},
-    # 华南地区
     "广州": {"lat": 23.1291, "lon": 113.2644},
     "深圳": {"lat": 22.5431, "lon": 114.0579},
     "南宁": {"lat": 22.8170, "lon": 108.3665},
@@ -59,11 +52,9 @@ CITY_COORDS = {
     "三亚": {"lat": 18.2528, "lon": 109.5119},
     "香港": {"lat": 22.3193, "lon": 114.1694},
     "澳门": {"lat": 22.1987, "lon": 113.5439},
-    # 西南地区
     "成都": {"lat": 30.5728, "lon": 104.0668},
     "贵阳": {"lat": 26.6470, "lon": 106.6302},
     "昆明": {"lat": 25.0389, "lon": 102.7183},
-    # 特色城市
     "敦煌": {"lat": 40.1421, "lon": 94.6620},
     "大理": {"lat": 25.6065, "lon": 100.2676},
     "丽江": {"lat": 26.8721, "lon": 100.2330},
@@ -78,24 +69,20 @@ CITY_COORDS = {
 }
 
 WEATHER_MAP = {
-    0: "晴",
-    1: "少云",
-    2: "多云",
-    3: "阴",
-    45: "雾",
-    48: "雾",
-    51: "小雨",
-    53: "中雨",
-    55: "大雨",
-    61: "小雨",
-    63: "中雨",
-    65: "大雨",
-    71: "小雪",
-    73: "中雪",
-    75: "大雪",
-    95: "雷雨",
-    96: "雷雨",
-    99: "雷雨",
+    0: "晴", 1: "少云", 2: "多云", 3: "阴",
+    45: "雾", 48: "雾",
+    51: "小雨", 53: "中雨", 55: "大雨",
+    61: "小雨", 63: "中雨", 65: "大雨",
+    71: "小雪", 73: "中雪", 75: "大雪",
+    80: "小雨", 81: "中雨", 82: "大雨",
+    95: "雷雨", 96: "雷雨", 99: "雷雨",
+}
+
+# ========== 新增：雨量强度映射 ==========
+RAIN_INTENSITY_MAP = {
+    51: 1, 53: 2, 55: 3,
+    61: 1, 63: 2, 65: 3,
+    80: 1, 81: 2, 82: 3,
 }
 
 # ==================== 天气获取 ====================
@@ -106,22 +93,37 @@ def fetch_weather(city):
         f"?latitude={coord['lat']}&longitude={coord['lon']}"
         "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"
     )
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    data = response.json()["current"]
-    return {
-        "city": city,
-        "temperature": data["temperature_2m"],
-        "humidity": data["relative_humidity_2m"],
-        "wind_speed": data["wind_speed_10m"],
-        "weather_code": data["weather_code"],
-        "weather": WEATHER_MAP.get(data["weather_code"], "未知"),
-        "is_history": False,
-        "date": datetime.now().strftime("%Y-%m-%d"),
-    }
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()["current"]
+        code = data["weather_code"]
+        return {
+            "city": city,
+            "temperature": data["temperature_2m"],
+            "humidity": data["relative_humidity_2m"],
+            "wind_speed": data["wind_speed_10m"],
+            "weather_code": code,
+            "weather": WEATHER_MAP.get(code, "未知"),
+            "rain_intensity": RAIN_INTENSITY_MAP.get(code, 0),  # 新增
+            "is_history": False,
+            "date": datetime.now().strftime("%Y-%m-%d"),
+        }
+    except Exception as e:
+        st.warning(f"⚠️ 实时天气获取失败，使用模拟数据。错误：{e}")
+        return {
+            "city": city,
+            "temperature": 22,
+            "humidity": 60,
+            "wind_speed": 5,
+            "weather_code": 1,
+            "weather": "晴（模拟）",
+            "rain_intensity": 0,
+            "is_history": False,
+            "date": datetime.now().strftime("%Y-%m-%d"),
+        }
 
 def fetch_historical_weather(city, date):
-    """获取某城市某一天的历史天气数据"""
     coord = CITY_COORDS[city]
     date_str = date.strftime("%Y-%m-%d")
     url = (
@@ -131,23 +133,38 @@ def fetch_historical_weather(city, date):
         "&daily=temperature_2m_mean,relative_humidity_2m_mean,weather_code,wind_speed_10m_max"
         "&timezone=auto"
     )
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    data = response.json()["daily"]
-    return {
-        "city": city,
-        "date": date_str,
-        "temperature": data["temperature_2m_mean"][0],
-        "humidity": data["relative_humidity_2m_mean"][0],
-        "wind_speed": data["wind_speed_10m_max"][0],
-        "weather_code": data["weather_code"][0],
-        "weather": WEATHER_MAP.get(data["weather_code"][0], "未知"),
-        "is_history": True,
-    }
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()["daily"]
+        code = data["weather_code"][0]
+        return {
+            "city": city,
+            "date": date_str,
+            "temperature": data["temperature_2m_mean"][0],
+            "humidity": data["relative_humidity_2m_mean"][0],
+            "wind_speed": data["wind_speed_10m_max"][0],
+            "weather_code": code,
+            "weather": WEATHER_MAP.get(code, "未知"),
+            "rain_intensity": RAIN_INTENSITY_MAP.get(code, 0),
+            "is_history": True,
+        }
+    except Exception as e:
+        st.warning(f"⚠️ 历史天气获取失败，使用模拟数据。错误：{e}")
+        return {
+            "city": city,
+            "date": date_str,
+            "temperature": 20,
+            "humidity": 55,
+            "wind_speed": 4,
+            "weather_code": 1,
+            "weather": "晴（模拟）",
+            "rain_intensity": 0,
+            "is_history": True,
+        }
 
 # ==================== 节气映射 ====================
 def season_image(weather):
-    # 优先判断“雷”（雷雨同时包含雷和雨，必须放前面）
     if "雷" in weather:
         return {
             "name": "惊蛰如雷",
@@ -206,6 +223,7 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
         "date": date_label,
         "mode_label": mode_label,
         "interaction_mode": interaction_mode,
+        "rain_intensity": weather_data.get("rain_intensity", 0),  # 新增
     }
 
     return f"""
@@ -296,7 +314,6 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
       let height = 0;
       let particles = [];
 
-      // ========== 鼠标交互变量 ==========
       let mouseX = -9999;
       let mouseY = -9999;
       let mouseActive = false;
@@ -322,7 +339,6 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
         const cx = (e.clientX - rect.left) * (canvas.width / rect.width);
         const cy = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-        // 涟漪（保留）
         for (let i = 0; i < 5; i++) {{
           ripples.push({{
             x: cx,
@@ -335,7 +351,6 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
           }});
         }}
 
-        // 爆炸模式：对附近粒子施加向外速度
         if (data.interaction_mode === "爆炸") {{
           const explodeRadius = 150 * window.devicePixelRatio;
           for (const p of particles) {{
@@ -369,6 +384,8 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
         const tempFactor = Math.max(0.4, Math.min(2.2, data.temperature / 18));
         const humidFactor = Math.max(0.4, data.humidity / 55);
         const windFactor = Math.max(0.5, data.wind / 10);
+        // 雨量强度因子
+        const rainIntensity = data.rain_intensity || 0;  // 0,1,2,3
 
         let p = {{
           x: rand(0, width),
@@ -382,9 +399,16 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
         }};
 
         if (data.mode === "rain") {{
-          p.vx = rand(-0.5, 0.5) + windFactor * 0.4;
-          p.vy = rand(5, 10) * humidFactor;
-          p.r = rand(0.8, 1.8);
+          // 雨量影响：速度、大小、数量
+          const speedFactor = 0.8 + 0.4 * rainIntensity;   // 小雨0.8, 中雨1.2, 大雨1.6
+          const sizeFactor = 0.7 + 0.3 * rainIntensity;     // 小雨0.7, 中雨1.0, 大雨1.3
+          const baseVy = rand(6, 14) * humidFactor * speedFactor;
+          p.vx = rand(-0.8, 0.8) + windFactor * 0.5;
+          p.vy = baseVy;
+          p.r = rand(0.8, 1.8) * sizeFactor;
+          p._initVy = baseVy;
+          p._initVx = p.vx;
+          p.life = 999999;
         }}
 
         if (data.mode === "snow") {{
@@ -412,7 +436,13 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
 
       function init() {{
         resize();
-        const count = Math.floor(220 + data.humidity * 3 + data.wind * 8);
+        let baseCount = 220;
+        if (data.mode === "rain") {{
+          const rainIntensity = data.rain_intensity || 0;
+          // 小雨250，中雨350，大雨450
+          baseCount = 250 + rainIntensity * 70;
+        }}
+        const count = Math.floor(baseCount + data.humidity * 3 + data.wind * 8);
         particles = Array.from({{ length: count }}, createParticle);
       }}
 
@@ -493,7 +523,7 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
 
       function updateParticle(p) {{
         const mode = data.interaction_mode || "排斥";
-        // ---------- 鼠标交互 ----------
+
         if (mouseActive) {{
           const dx = p.x - mouseX;
           const dy = p.y - mouseY;
@@ -525,23 +555,45 @@ def build_canvas(weather_data, image_data, interaction_mode="排斥"):
         if (data.mode === "snow") {{
           p.x += p.vx + Math.sin(Date.now() * 0.001 + p.y * 0.01) * 0.35;
           p.y += p.vy;
+        }} else if (data.mode === "rain") {{
+          // 恢复初始速度（抵抗阻尼）
+          if (p._initVy) {{
+            p.vy += (p._initVy - p.vy) * 0.05;
+          }}
+          if (p._initVx) {{
+            p.vx += (p._initVx - p.vx) * 0.02;
+          }}
+          p.x += p.vx;
+          p.y += p.vy;
         }} else {{
           p.x += p.vx;
           p.y += p.vy;
         }}
 
-        p.vx *= 0.98;
-        p.vy *= 0.98;
+        if (data.mode === "rain") {{
+          p.vx *= 0.995;  // 水平轻微阻尼
+        }} else {{
+          p.vx *= 0.98;
+          p.vy *= 0.98;
+        }}
 
-        p.life -= 1;
+        if (data.mode !== "rain") {{
+          p.life -= 1;
+        }}
 
-        if (
-          p.x < -100 || p.x > width + 100 ||
-          p.y < -100 || p.y > height + 100 ||
-          p.life <= 0
-        ) {{
-          Object.assign(p, createParticle());
-          p.y = data.mode === "rain" || data.mode === "snow" ? -20 : rand(0, height);
+        const outOfBounds = p.x < -100 || p.x > width + 100 || p.y < -100 || p.y > height + 100;
+        const lifeEnd = (data.mode !== "rain" && p.life <= 0);
+
+        if (outOfBounds || lifeEnd) {{
+          if (data.mode === "rain") {{
+            p.x = rand(0, width);
+            p.y = -rand(5, 30);
+            p.vy = p._initVy || rand(6, 14) * 0.7;
+            p.vx = (p._initVx || 0) + rand(-0.3, 0.3);
+          }} else {{
+            Object.assign(p, createParticle());
+            p.y = rand(0, height);
+          }}
         }}
       }}
 
@@ -596,7 +648,6 @@ st.markdown(
 with st.sidebar:
     st.title("城市气象")
 
-    # 搜索框
     search_term = st.text_input("🔍 搜索城市", placeholder="输入城市名...", key="city_search")
     if search_term:
         filtered_cities = [city for city in CITY_COORDS.keys() if search_term.lower() in city.lower()]
@@ -608,7 +659,6 @@ with st.sidebar:
 
     city = st.selectbox("选择城市", filtered_cities, key="city_select")
 
-    # ========== 交互模式 ==========
     st.divider()
     st.subheader("🖱️ 鼠标交互")
     interaction_mode = st.selectbox(
@@ -618,7 +668,6 @@ with st.sidebar:
         key="interaction_mode"
     )
 
-    # ========== 历史回放 ==========
     st.divider()
     st.subheader("⏳ 历史回放")
 
@@ -644,15 +693,11 @@ with st.sidebar:
 
 # ==================== 主内容 ====================
 try:
-    # 判断使用实时还是历史数据
     if history_mode and st.session_state.get("play_history", False):
         city = st.session_state["history_city"]
         date = st.session_state["history_date"]
         weather_data = fetch_historical_weather(city, date)
-        # 自动推进日期（播放效果）
         st.session_state["history_date"] += timedelta(days=1)
-        # 控制播放速度：通过定时器控制刷新频率，但 Streamlit 无法精确控制间隔，用 sleep 模拟
-        # 这里用 st.rerun() 实现连续刷新
     else:
         weather_data = fetch_weather(city)
 
@@ -664,14 +709,12 @@ try:
         scrolling=False
     )
 
-    # 显示指标
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("城市", weather_data["city"])
     col2.metric("温度", f"{weather_data['temperature']}°C")
     col3.metric("湿度", f"{weather_data['humidity']}%")
     col4.metric("风速", f"{weather_data['wind_speed']} km/h")
 
-    # 备注信息
     history_tag = "（历史数据）" if weather_data.get("is_history", False) else "（实时数据）"
     st.markdown(
         f"""
@@ -684,11 +727,9 @@ try:
         unsafe_allow_html=True
     )
 
-    # 如果处于播放模式，自动刷新
     if history_mode and st.session_state.get("play_history", False):
         import time
         speed = st.session_state.get("history_speed", 1)
-        # 速度越快，刷新间隔越短
         delay = max(0.5, 3.0 / speed)
         time.sleep(delay)
         st.rerun()
