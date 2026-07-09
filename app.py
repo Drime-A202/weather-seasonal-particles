@@ -1,11 +1,24 @@
-import json
-import math
-import random
-import requests
+"""app.py - Streamlit 主入口
+职责：UI 布局（页头、侧边栏、主内容） + 业务逻辑编排
+
+依赖模块：
+  - config.py       ：CITY_COORDS
+  - weather_api.py  ：fetch_weather / fetch_historical_weather
+  - term_mapping.py ：season_image
+  - canvas_builder.py：build_canvas
+"""
+
+import time
 import streamlit as st
-import pandas as pd
 from datetime import datetime, timedelta
 
+from config import CITY_COORDS
+from weather_api import fetch_weather, fetch_historical_weather
+from term_mapping import season_image
+from canvas_builder import build_canvas
+
+
+# ==================== 页面基础配置 ====================
 st.set_page_config(
     page_title="天象·气象幻境",
     page_icon="☁",
@@ -13,612 +26,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==================== 城市列表 ====================
-CITY_COORDS = {
-    "北京": {"lat": 39.9042, "lon": 116.4074},
-    "上海": {"lat": 31.2304, "lon": 121.4737},
-    "天津": {"lat": 39.3434, "lon": 117.3616},
-    "重庆": {"lat": 29.4316, "lon": 106.9123},
-    "哈尔滨": {"lat": 45.8038, "lon": 126.5349},
-    "长春": {"lat": 43.8171, "lon": 125.3235},
-    "沈阳": {"lat": 41.8057, "lon": 123.4315},
-    "大连": {"lat": 38.9140, "lon": 121.6147},
-    "呼和浩特": {"lat": 40.8426, "lon": 111.7490},
-    "太原": {"lat": 37.8706, "lon": 112.5489},
-    "石家庄": {"lat": 38.0428, "lon": 114.5149},
-    "济南": {"lat": 36.6512, "lon": 117.1201},
-    "青岛": {"lat": 36.0671, "lon": 120.3826},
-    "乌鲁木齐": {"lat": 43.8256, "lon": 87.6168},
-    "拉萨": {"lat": 29.6520, "lon": 91.1721},
-    "西宁": {"lat": 36.6171, "lon": 101.7778},
-    "兰州": {"lat": 36.0611, "lon": 103.8343},
-    "银川": {"lat": 38.4872, "lon": 106.2309},
-    "南京": {"lat": 32.0603, "lon": 118.7969},
-    "杭州": {"lat": 30.2741, "lon": 120.1551},
-    "合肥": {"lat": 31.8206, "lon": 117.2272},
-    "南昌": {"lat": 28.6820, "lon": 115.8579},
-    "福州": {"lat": 26.0745, "lon": 119.2965},
-    "台北": {"lat": 25.0330, "lon": 121.5654},
-    "厦门": {"lat": 24.4798, "lon": 118.0894},
-    "宁波": {"lat": 29.8683, "lon": 121.5440},
-    "温州": {"lat": 27.9938, "lon": 120.6994},
-    "郑州": {"lat": 34.7466, "lon": 113.6254},
-    "武汉": {"lat": 30.5928, "lon": 114.3055},
-    "长沙": {"lat": 28.2282, "lon": 112.9388},
-    "广州": {"lat": 23.1291, "lon": 113.2644},
-    "深圳": {"lat": 22.5431, "lon": 114.0579},
-    "南宁": {"lat": 22.8170, "lon": 108.3665},
-    "海口": {"lat": 20.0444, "lon": 110.1993},
-    "三亚": {"lat": 18.2528, "lon": 109.5119},
-    "香港": {"lat": 22.3193, "lon": 114.1694},
-    "澳门": {"lat": 22.1987, "lon": 113.5439},
-    "成都": {"lat": 30.5728, "lon": 104.0668},
-    "贵阳": {"lat": 26.6470, "lon": 106.6302},
-    "昆明": {"lat": 25.0389, "lon": 102.7183},
-    "敦煌": {"lat": 40.1421, "lon": 94.6620},
-    "大理": {"lat": 25.6065, "lon": 100.2676},
-    "丽江": {"lat": 26.8721, "lon": 100.2330},
-    "张家界": {"lat": 29.3998, "lon": 110.4784},
-    "苏州": {"lat": 31.2989, "lon": 120.5853},
-    "无锡": {"lat": 31.4912, "lon": 120.3119},
-    "佛山": {"lat": 23.0215, "lon": 113.1214},
-    "东莞": {"lat": 23.0207, "lon": 113.7518},
-    "珠海": {"lat": 22.2707, "lon": 113.5767},
-    "桂林": {"lat": 25.2736, "lon": 110.2903},
-    "黄山": {"lat": 29.7147, "lon": 118.3155},
-}
 
-WEATHER_MAP = {
-    0: "晴", 1: "少云", 2: "多云", 3: "阴",
-    45: "雾", 48: "雾",
-    51: "小雨", 53: "中雨", 55: "大雨",
-    61: "小雨", 63: "中雨", 65: "大雨",
-    71: "小雪", 73: "中雪", 75: "大雪",
-    80: "小雨", 81: "中雨", 82: "大雨",
-    95: "雷雨", 96: "雷雨", 99: "雷雨",
-}
-
-# ========== 新增：雨量强度映射 ==========
-RAIN_INTENSITY_MAP = {
-    51: 1, 53: 2, 55: 3,
-    61: 1, 63: 2, 65: 3,
-    80: 1, 81: 2, 82: 3,
-}
-
-# ==================== 天气获取 ====================
-def fetch_weather(city):
-    coord = CITY_COORDS[city]
-    url = (
-        "https://api.open-meteo.com/v1/forecast"
-        f"?latitude={coord['lat']}&longitude={coord['lon']}"
-        "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"
-    )
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()["current"]
-        code = data["weather_code"]
-        return {
-            "city": city,
-            "temperature": data["temperature_2m"],
-            "humidity": data["relative_humidity_2m"],
-            "wind_speed": data["wind_speed_10m"],
-            "weather_code": code,
-            "weather": WEATHER_MAP.get(code, "未知"),
-            "rain_intensity": RAIN_INTENSITY_MAP.get(code, 0),  # 新增
-            "is_history": False,
-            "date": datetime.now().strftime("%Y-%m-%d"),
-        }
-    except Exception as e:
-        st.warning(f"⚠️ 实时天气获取失败，使用模拟数据。错误：{e}")
-        return {
-            "city": city,
-            "temperature": 22,
-            "humidity": 60,
-            "wind_speed": 5,
-            "weather_code": 1,
-            "weather": "晴（模拟）",
-            "rain_intensity": 0,
-            "is_history": False,
-            "date": datetime.now().strftime("%Y-%m-%d"),
-        }
-
-def fetch_historical_weather(city, date):
-    coord = CITY_COORDS[city]
-    date_str = date.strftime("%Y-%m-%d")
-    url = (
-        "https://archive-api.open-meteo.com/v1/archive"
-        f"?latitude={coord['lat']}&longitude={coord['lon']}"
-        f"&start_date={date_str}&end_date={date_str}"
-        "&daily=temperature_2m_mean,relative_humidity_2m_mean,weather_code,wind_speed_10m_max"
-        "&timezone=auto"
-    )
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()["daily"]
-        code = data["weather_code"][0]
-        return {
-            "city": city,
-            "date": date_str,
-            "temperature": data["temperature_2m_mean"][0],
-            "humidity": data["relative_humidity_2m_mean"][0],
-            "wind_speed": data["wind_speed_10m_max"][0],
-            "weather_code": code,
-            "weather": WEATHER_MAP.get(code, "未知"),
-            "rain_intensity": RAIN_INTENSITY_MAP.get(code, 0),
-            "is_history": True,
-        }
-    except Exception as e:
-        st.warning(f"⚠️ 历史天气获取失败，使用模拟数据。错误：{e}")
-        return {
-            "city": city,
-            "date": date_str,
-            "temperature": 20,
-            "humidity": 55,
-            "wind_speed": 4,
-            "weather_code": 1,
-            "weather": "晴（模拟）",
-            "rain_intensity": 0,
-            "is_history": True,
-        }
-
-# ==================== 节气映射 ====================
-def season_image(weather):
-    if "雷" in weather:
-        return {
-            "name": "惊蛰如雷",
-            "solar_term": "惊蛰",
-            "mode": "thunder",
-            "poem": "雷声惊醒地下的生机，光在云层中裂开。",
-            "colors": ["#101018", "#312e81", "#facc15", "#f8fafc"],
-        }
-    if "雨" in weather:
-        return {
-            "name": "雨水如墨",
-            "solar_term": "雨水",
-            "mode": "rain",
-            "poem": "雨落为墨，城市在水痕中晕开。",
-            "colors": ["#0e1116", "#1f2937", "#64748b", "#dbeafe"],
-        }
-    if "雪" in weather:
-        return {
-            "name": "霜降如雪",
-            "solar_term": "霜降",
-            "mode": "snow",
-            "poem": "寒意凝结成白，城市被轻轻覆盖。",
-            "colors": ["#0f172a", "#334155", "#e2e8f0", "#ffffff"],
-        }
-    if "雾" in weather or "阴" in weather or "云" in weather:
-        return {
-            "name": "清明如烟",
-            "solar_term": "清明",
-            "mode": "mist",
-            "poem": "雾气如烟，边界被风慢慢抹去。",
-            "colors": ["#111827", "#475569", "#94a3b8", "#e5e7eb"],
-        }
-    return {
-        "name": "立夏流光",
-        "solar_term": "立夏",
-        "mode": "clear",
-        "poem": "晴光流动，热度在空气中慢慢生长。",
-        "colors": ["#08111f", "#0f766e", "#f59e0b", "#fef3c7"],
-    }
-
-# ==================== Canvas 构建 ====================
-def build_canvas(weather_data, image_data, interaction_mode="排斥"):
-    is_history = weather_data.get("is_history", False)
-    date_label = weather_data.get("date", "")
-    mode_label = "⏳ HISTORICAL" if is_history else "🌐 LIVE"
-
-    payload = {
-        "city": weather_data["city"],
-        "temperature": weather_data["temperature"],
-        "humidity": weather_data["humidity"],
-        "wind": weather_data["wind_speed"],
-        "weather": weather_data["weather"],
-        "mode": image_data["mode"],
-        "colors": image_data["colors"],
-        "is_history": is_history,
-        "date": date_label,
-        "mode_label": mode_label,
-        "interaction_mode": interaction_mode,
-        "rain_intensity": weather_data.get("rain_intensity", 0),  # 新增
-    }
-
-    return f"""
-    <div class="stage">
-      <canvas id="sky"></canvas>
-      <div class="overlay">
-        <div class="label">{mode_label} {date_label}</div>
-        <h1>{weather_data["city"]}</h1>
-        <h2>{image_data["name"]}</h2>
-        <p>{image_data["poem"]}</p>
-        <div class="metrics">
-          <span>温度 {weather_data["temperature"]}°C</span>
-          <span>湿度 {weather_data["humidity"]}%</span>
-          <span>风速 {weather_data["wind_speed"]} km/h</span>
-          <span>{weather_data["weather"]}</span>
-        </div>
-      </div>
-    </div>
-
-    <style>
-      .stage {{
-        position: relative;
-        width: 100%;
-        height: 680px;
-        overflow: hidden;
-        border-radius: 8px;
-        background: #080b10;
-        cursor: crosshair;
-      }}
-      #sky {{
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-      }}
-      .overlay {{
-        position: absolute;
-        left: 42px;
-        bottom: 38px;
-        max-width: 720px;
-        color: white;
-        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-      }}
-      .label {{
-        margin-bottom: 14px;
-        color: rgba(255,255,255,.58);
-        font-size: 12px;
-        letter-spacing: .16em;
-        font-weight: 700;
-      }}
-      .overlay h1 {{
-        margin: 0;
-        font-size: 86px;
-        line-height: .9;
-        font-weight: 900;
-      }}
-      .overlay h2 {{
-        margin: 16px 0 10px;
-        font-size: 34px;
-        font-weight: 700;
-      }}
-      .overlay p {{
-        margin: 0 0 24px;
-        color: rgba(255,255,255,.72);
-        font-size: 20px;
-      }}
-      .metrics {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }}
-      .metrics span {{
-        padding: 8px 12px;
-        border: 1px solid rgba(255,255,255,.22);
-        border-radius: 999px;
-        background: rgba(255,255,255,.08);
-        color: rgba(255,255,255,.82);
-        font-size: 13px;
-      }}
-    </style>
-
-    <script>
-      const data = {json.dumps(payload, ensure_ascii=False)};
-      const canvas = document.getElementById("sky");
-      const ctx = canvas.getContext("2d");
-
-      let width = 0;
-      let height = 0;
-      let particles = [];
-
-      let mouseX = -9999;
-      let mouseY = -9999;
-      let mouseActive = false;
-      let ripples = [];
-      let explosionActive = false;
-      let explosionTime = 0;
-
-      canvas.addEventListener('mousemove', function(e) {{
-        const rect = canvas.getBoundingClientRect();
-        mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
-        mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
-        mouseActive = true;
-      }});
-
-      canvas.addEventListener('mouseleave', function() {{
-        mouseActive = false;
-        mouseX = -9999;
-        mouseY = -9999;
-      }});
-
-      canvas.addEventListener('click', function(e) {{
-        const rect = canvas.getBoundingClientRect();
-        const cx = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const cy = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-        for (let i = 0; i < 5; i++) {{
-          ripples.push({{
-            x: cx,
-            y: cy,
-            radius: 10 + i * 8,
-            maxRadius: Math.max(width, height) * 0.5,
-            alpha: 0.9 - i * 0.12,
-            speed: 4 + i * 1.5,
-            life: 0
-          }});
-        }}
-
-        if (data.interaction_mode === "爆炸") {{
-          const explodeRadius = 150 * window.devicePixelRatio;
-          for (const p of particles) {{
-            const dx = p.x - cx;
-            const dy = p.y - cy;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < explodeRadius && dist > 1) {{
-              const force = (1 - dist / explodeRadius) * 12;
-              p.vx += (dx / dist) * force;
-              p.vy += (dy / dist) * force;
-            }}
-          }}
-          explosionActive = true;
-          explosionTime = Date.now();
-        }}
-      }});
-
-      function resize() {{
-        const rect = canvas.getBoundingClientRect();
-        width = rect.width * window.devicePixelRatio;
-        height = rect.height * window.devicePixelRatio;
-        canvas.width = width;
-        canvas.height = height;
-      }}
-
-      function rand(min, max) {{
-        return Math.random() * (max - min) + min;
-      }}
-
-      function createParticle() {{
-        const tempFactor = Math.max(0.4, Math.min(2.2, data.temperature / 18));
-        const humidFactor = Math.max(0.4, data.humidity / 55);
-        const windFactor = Math.max(0.5, data.wind / 10);
-        // 雨量强度因子
-        const rainIntensity = data.rain_intensity || 0;  // 0,1,2,3
-
-        let p = {{
-          x: rand(0, width),
-          y: rand(0, height),
-          vx: rand(-0.4, 0.4) * windFactor,
-          vy: rand(0.4, 1.4) * humidFactor,
-          r: rand(1, 3) * tempFactor,
-          life: rand(80, 220),
-          color: data.colors[Math.floor(rand(0, data.colors.length))],
-          alpha: rand(0.18, 0.88)
-        }};
-
-        if (data.mode === "rain") {{
-          // 雨量影响：速度、大小、数量
-          const speedFactor = 0.8 + 0.4 * rainIntensity;   // 小雨0.8, 中雨1.2, 大雨1.6
-          const sizeFactor = 0.7 + 0.3 * rainIntensity;     // 小雨0.7, 中雨1.0, 大雨1.3
-          const baseVy = rand(6, 14) * humidFactor * speedFactor;
-          p.vx = rand(-0.8, 0.8) + windFactor * 0.5;
-          p.vy = baseVy;
-          p.r = rand(0.8, 1.8) * sizeFactor;
-          p._initVy = baseVy;
-          p._initVx = p.vx;
-          p.life = 999999;
-        }}
-
-        if (data.mode === "snow") {{
-          p.vx = rand(-0.7, 0.7) * windFactor;
-          p.vy = rand(0.5, 1.8);
-          p.r = rand(1.5, 4.2);
-        }}
-
-        if (data.mode === "mist") {{
-          p.vx = rand(-0.5, 0.5) * windFactor;
-          p.vy = rand(-0.25, 0.25);
-          p.r = rand(18, 56) * humidFactor;
-          p.alpha = rand(0.03, 0.11);
-        }}
-
-        if (data.mode === "thunder") {{
-          p.vx = rand(-1.8, 1.8);
-          p.vy = rand(-1.8, 1.8);
-          p.r = rand(1, 4);
-          p.alpha = rand(0.35, 1);
-        }}
-
-        return p;
-      }}
-
-      function init() {{
-        resize();
-        let baseCount = 220;
-        if (data.mode === "rain") {{
-          const rainIntensity = data.rain_intensity || 0;
-          // 小雨250，中雨350，大雨450
-          baseCount = 250 + rainIntensity * 70;
-        }}
-        const count = Math.floor(baseCount + data.humidity * 3 + data.wind * 8);
-        particles = Array.from({{ length: count }}, createParticle);
-      }}
-
-      function drawBackground() {{
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, data.colors[0]);
-        gradient.addColorStop(0.55, data.colors[1]);
-        gradient.addColorStop(1, "#05070b");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-      }}
-
-      function drawThunder() {{
-        if (data.mode !== "thunder") return;
-        if (Math.random() < 0.035) {{
-          ctx.save();
-          ctx.strokeStyle = "rgba(255,245,170,.9)";
-          ctx.lineWidth = 3 * window.devicePixelRatio;
-          ctx.beginPath();
-          let x = rand(width * 0.25, width * 0.8);
-          let y = 0;
-          ctx.moveTo(x, y);
-          for (let i = 0; i < 10; i++) {{
-            x += rand(-60, 60) * window.devicePixelRatio;
-            y += rand(35, 80) * window.devicePixelRatio;
-            ctx.lineTo(x, y);
-          }}
-          ctx.stroke();
-          ctx.restore();
-          ctx.fillStyle = "rgba(255,255,255,.12)";
-          ctx.fillRect(0, 0, width, height);
-        }}
-      }}
-
-      function drawRipples() {{
-        for (let i = ripples.length - 1; i >= 0; i--) {{
-          const r = ripples[i];
-          r.radius += r.speed;
-          r.alpha *= 0.98;
-          r.life++;
-          if (r.alpha < 0.01 || r.radius > r.maxRadius) {{
-            ripples.splice(i, 1);
-            continue;
-          }}
-          ctx.save();
-          ctx.globalAlpha = r.alpha * 0.4;
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 2 * (1 - r.radius / r.maxRadius);
-          ctx.shadowColor = "rgba(255,255,255,0.5)";
-          ctx.shadowBlur = 20;
-          ctx.beginPath();
-          ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
-        }}
-      }}
-
-      function drawParticle(p) {{
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.strokeStyle = p.color;
-
-        if (data.mode === "rain") {{
-          ctx.lineWidth = p.r * window.devicePixelRatio;
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x + p.vx * 6, p.y + p.vy * 3);
-          ctx.stroke();
-        }} else {{
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r * window.devicePixelRatio, 0, Math.PI * 2);
-          ctx.fill();
-        }}
-
-        ctx.restore();
-      }}
-
-      function updateParticle(p) {{
-        const mode = data.interaction_mode || "排斥";
-
-        if (mouseActive) {{
-          const dx = p.x - mouseX;
-          const dy = p.y - mouseY;
-          const dist2 = dx * dx + dy * dy;
-          const maxDist = 80 * window.devicePixelRatio;
-          if (dist2 < maxDist * maxDist && dist2 > 0.1) {{
-            const dist = Math.sqrt(dist2);
-            const force = (1 - dist / maxDist) * 2.5;
-
-            if (mode === "排斥") {{
-              p.vx += (dx / dist) * force;
-              p.vy += (dy / dist) * force;
-            }} else if (mode === "吸引") {{
-              p.vx -= (dx / dist) * force * 0.7;
-              p.vy -= (dy / dist) * force * 0.7;
-            }} else if (mode === "漩涡") {{
-              const angle = Math.atan2(dy, dx);
-              const perpX = -Math.sin(angle);
-              const perpY = Math.cos(angle);
-              const swirlForce = force * 0.9;
-              p.vx += perpX * swirlForce;
-              p.vy += perpY * swirlForce;
-              p.vx -= (dx / dist) * force * 0.15;
-              p.vy -= (dy / dist) * force * 0.15;
-            }}
-          }}
-        }}
-
-        if (data.mode === "snow") {{
-          p.x += p.vx + Math.sin(Date.now() * 0.001 + p.y * 0.01) * 0.35;
-          p.y += p.vy;
-        }} else if (data.mode === "rain") {{
-          // 恢复初始速度（抵抗阻尼）
-          if (p._initVy) {{
-            p.vy += (p._initVy - p.vy) * 0.05;
-          }}
-          if (p._initVx) {{
-            p.vx += (p._initVx - p.vx) * 0.02;
-          }}
-          p.x += p.vx;
-          p.y += p.vy;
-        }} else {{
-          p.x += p.vx;
-          p.y += p.vy;
-        }}
-
-        if (data.mode === "rain") {{
-          p.vx *= 0.995;  // 水平轻微阻尼
-        }} else {{
-          p.vx *= 0.98;
-          p.vy *= 0.98;
-        }}
-
-        if (data.mode !== "rain") {{
-          p.life -= 1;
-        }}
-
-        const outOfBounds = p.x < -100 || p.x > width + 100 || p.y < -100 || p.y > height + 100;
-        const lifeEnd = (data.mode !== "rain" && p.life <= 0);
-
-        if (outOfBounds || lifeEnd) {{
-          if (data.mode === "rain") {{
-            p.x = rand(0, width);
-            p.y = -rand(5, 30);
-            p.vy = p._initVy || rand(6, 14) * 0.7;
-            p.vx = (p._initVx || 0) + rand(-0.3, 0.3);
-          }} else {{
-            Object.assign(p, createParticle());
-            p.y = rand(0, height);
-          }}
-        }}
-      }}
-
-      function animate() {{
-        drawBackground();
-        ctx.globalCompositeOperation = data.mode === "mist" ? "screen" : "source-over";
-        for (const p of particles) {{
-          updateParticle(p);
-          drawParticle(p);
-        }}
-        ctx.globalCompositeOperation = "source-over";
-        drawRipples();
-        drawThunder();
-        if (explosionActive && Date.now() - explosionTime > 2000) {{
-          explosionActive = false;
-        }}
-        requestAnimationFrame(animate);
-      }}
-
-      window.addEventListener("resize", init);
-      init();
-      animate();
-    </script>
-    """
-# ==================== 界面 ====================
+# ==================== 全局样式 ====================
 st.markdown(
     """
     <style>
@@ -634,6 +43,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+# ==================== 页头 ====================
 st.markdown(
     """
     <div class="intro">
@@ -644,10 +55,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 # ==================== 侧边栏 ====================
 with st.sidebar:
     st.title("城市气象")
 
+    # 城市搜索 + 选择
     search_term = st.text_input("🔍 搜索城市", placeholder="输入城市名...", key="city_search")
     if search_term:
         filtered_cities = [city for city in CITY_COORDS.keys() if search_term.lower() in city.lower()]
@@ -691,8 +104,10 @@ with st.sidebar:
 
     st.caption("数据来源：Open-Meteo 实时/历史天气接口")
 
-# ==================== 主内容 ====================
+
+# ==================== 主内容区 ====================
 try:
+    # 1) 取天气数据（实时 或 历史回放）
     if history_mode and st.session_state.get("play_history", False):
         city = st.session_state["history_city"]
         date = st.session_state["history_date"]
@@ -701,20 +116,24 @@ try:
     else:
         weather_data = fetch_weather(city)
 
+    # 2) 映射到节气意象
     image_data = season_image(weather_data["weather"])
 
+    # 3) 渲染粒子画布
     st.components.v1.html(
         build_canvas(weather_data, image_data, interaction_mode),
         height=700,
         scrolling=False
     )
 
+    # 4) 指标卡片
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("城市", weather_data["city"])
     col2.metric("温度", f"{weather_data['temperature']}°C")
     col3.metric("湿度", f"{weather_data['humidity']}%")
     col4.metric("风速", f"{weather_data['wind_speed']} km/h")
 
+    # 5) 说明文本
     history_tag = "（历史数据）" if weather_data.get("is_history", False) else "（实时数据）"
     st.markdown(
         f"""
@@ -727,8 +146,8 @@ try:
         unsafe_allow_html=True
     )
 
+    # 6) 历史回放的延时 + 重渲染
     if history_mode and st.session_state.get("play_history", False):
-        import time
         speed = st.session_state.get("history_speed", 1)
         delay = max(0.5, 3.0 / speed)
         time.sleep(delay)
