@@ -94,6 +94,53 @@ streamlit run app.py
 
 浏览器打开 `http://localhost:8501`
 
+## 🌐 部署说明
+
+本项目采用 **双入口部署策略**：主应用部署在 Streamlit Cloud，同时使用 GitHub Pages 作为项目入口页。
+
+---
+
+### 1️⃣ Streamlit Cloud（主应用）
+
+Streamlit Cloud 负责运行完整的 Python 后端 + 粒子画布，是项目的核心访问入口。
+
+**部署步骤：**
+
+1. 将项目推送到 GitHub 仓库（确保包含 `app.py` 和 `requirements.txt`）。
+2. 登录 [Streamlit Cloud](https://streamlit.io/cloud)，点击 **New app**。
+3. 选择仓库 `Drime-A202/weather-seasonal-particles`，分支 `main`，主文件 `app.py`。
+4. 点击 **Deploy**，等待 1-2 分钟即可获得公网链接。
+
+> ✅ **当前在线地址**：[https://weather-seasonal-particles-4i5wlj4ah2zpsq39wk7xtk.streamlit.app](https://weather-seasonal-particles-4i5wlj4ah2zpsq39wk7xtk.streamlit.app)
+
+---
+
+### 2️⃣ GitHub Pages（项目入口页）
+
+GitHub Pages 托管了静态跳转页 `index.html`，访问该地址会自动重定向到 Streamlit 主应用。作用是为项目提供一个更短、更易记的入口，并承载项目展示的社交卡片（Open Graph）。
+
+**部署步骤：**
+
+1. 在仓库根目录创建 `index.html` 文件（包含自动跳转逻辑和项目简介）。
+2. 进入仓库 **Settings → Pages**。
+3. 在 **Build and deployment** 部分：
+   - **Source** 选择 `Deploy from a branch`。
+   - **Branch** 选择 `main`，文件夹选择 `/ (root)`。
+4. 点击 **Save**，等待约 1 分钟，页面即部署完成。
+
+> ✅ **当前入口地址**：[https://Drime-A202.github.io/weather-seasonal-particles](https://Drime-A202.github.io/weather-seasonal-particles)
+
+---
+
+### 3️⃣ 自定义域名（可选）
+
+如需绑定自定义域名：
+
+- **Streamlit Cloud**：在应用 Settings → Custom Domain 中配置，并将域名 CNAME 记录指向 Streamlit 提供的目标地址。
+- **GitHub Pages**：在仓库 Settings → Pages → Custom domain 中填写域名，并在 DNS 服务商处将 CNAME 记录指向 `Drime-A202.github.io`。
+
+---
+
 
 ## 🎮 使用指南
 
@@ -199,3 +246,4 @@ weather-seasonal-particles/
 
 
 ⭐ 如果这个项目对你有帮助，欢迎 Star 支持！
+
