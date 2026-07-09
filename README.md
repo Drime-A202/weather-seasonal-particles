@@ -1,3 +1,7 @@
+![GitHub last commit](https://img.shields.io/github/last-commit/Drime-A202/weather-seasonal-particles)
+![GitHub repo size](https://img.shields.io/github/repo-size/Drime-A202/weather-seasonal-particles)
+![License](https://img.shields.io/github/license/Drime-A202/weather-seasonal-particles)
+![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)
 # 天象 · 气象幻境
 
 > 基于实时天气数据驱动的节气意象可视化 —— 让城市的气象转译为可感知的传统美学。
