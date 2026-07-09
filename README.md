@@ -161,9 +161,9 @@ weather-seasonal-particles/
 
 ## 📸 效果展示
 
-| 北京 · 晴（立夏流光） | 广州 · 雷雨（惊蛰如雷） | 哈尔滨 · 雪（霜降如雪） |
+|  晴（立夏流光） | 雷雨（惊蛰如雷） | 多云（清明如烟） |
 | :---: | :---: | :---: |
-| ![北京晴](screenshots/beijing-sunny.png) | ![广州雷雨](screenshots/guangzhou-thunder.png) | ![哈尔滨雪](screenshots/haerbin-snow.png) |
+| ![晴](screenshots/sunny.png) | ![雷雨](screenshots/thunder.png) | ![多云](screenshots/somg.png) |
 
 > 注：请将实际截图放入 `screenshots/` 目录，并命名为对应文件名。
 
