@@ -163,7 +163,7 @@ weather-seasonal-particles/
 
 |  晴（立夏流光） | 雷雨（惊蛰如雷） | 多云（清明如烟） |
 | :---: | :---: | :---: |
-| ![晴](screenshots/sunny.png) | ![雷雨](screenshots/thunder.png) | ![多云](screenshots/somg.png) |
+| ![晴](screenshots/sunny.jpg) | ![雷雨](screenshots/thunder.jpg) | ![多云](screenshots/somg.jpg) |
 
 > 注：请将实际截图放入 `screenshots/` 目录，并命名为对应文件名。
 
