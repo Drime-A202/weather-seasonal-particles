@@ -3,11 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>天象 · 气象幻境</title>
+
   <!-- 2秒后自动跳转 -->
-  <meta http-equiv="refresh" content="2; url='https://weather-seasonal-particles-4i5wlj4ah2zpsq39wk7xtk.streamlit.app'">
+  <meta http-equiv="refresh" content="2; url='https://weather-seasonal-particles-pzpqmob3ppquyvzkyrqdks.streamlit.app/'">
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       display: flex;
       justify-content: center;
@@ -20,9 +28,24 @@
       text-align: center;
       padding: 20px;
     }
-    .logo { font-size: 64px; margin-bottom: 16px; }
-    h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.02em; }
-    p { color: #5b6472; margin-top: 8px; font-size: 16px; }
+
+    .logo {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      color: #5b6472;
+      margin-top: 8px;
+      font-size: 16px;
+    }
+
     .btn {
       margin-top: 28px;
       padding: 12px 36px;
@@ -36,25 +59,56 @@
       text-decoration: none;
       transition: 0.2s;
     }
-    .btn:hover { background: #d6ff4b; color: #080b10; }
-    .hint { margin-top: 20px; color: #3a404a; font-size: 14px; }
+
+    .btn:hover {
+      background: #d6ff4b;
+      color: #080b10;
+    }
+
+    .hint {
+      margin-top: 20px;
+      color: #3a404a;
+      font-size: 14px;
+    }
+
     .spinner {
-      width: 32px; height: 32px;
+      width: 32px;
+      height: 32px;
       border: 3px solid rgba(255,255,255,0.08);
       border-top-color: #d6ff4b;
       border-radius: 50%;
       animation: spin 0.9s linear infinite;
       margin-bottom: 20px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
+
 <body>
+
   <div class="spinner"></div>
+
   <div class="logo">☁</div>
+
   <h1>天象 · 气象幻境</h1>
+
   <p>天气数据驱动的节气意象粒子系统</p>
-  <a class="btn" href="https://weather-seasonal-particles-4i5wlj4ah2zpsq39wk7xtk.streamlit.app">进入体验 →</a>
-  <p class="hint">⏳ 页面将在 2 秒后自动跳转</p>
+
+  <a 
+    class="btn" 
+    href="https://weather-seasonal-particles-pzpqmob3ppquyvzkyrqdks.streamlit.app/"
+  >
+    进入体验 →
+  </a>
+
+  <p class="hint">
+    ⏳ 页面将在 2 秒后自动跳转
+  </p>
+
 </body>
 </html>
